@@ -1,0 +1,33 @@
+
+services:
+  webapp:
+    container_name: parcel_webapp
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      DATABASE_HOST: db
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  redis:
+    image: redis:7.4.1
+    container_name: parcel_redis
+    ports:
+      - "6379:6379"
+
+  db:
+    image: mysql:9.1
+    container_name: parcel_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"

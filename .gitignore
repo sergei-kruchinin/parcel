@@ -1,0 +1,29 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv
+env/
+venv/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Unit test / coverage reports
+.coverage
+.pytest_cache/
+.tox/
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# Local environment variables
+.env
+
+# MacOS system files
+.DS_Store
