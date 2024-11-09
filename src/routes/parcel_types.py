@@ -1,20 +1,17 @@
 """
-Модуль: routes.parcel_types
+Модуль: routes.parcel
 
-Определяет маршруты для обработки запросов, связанных с посылками.
-На данный момент, содержит базовую проверку работы с данными типов посылок из базы данных - для проверки
-сборки контейнеров.
+Определяет API-маршруты для обработки запросов, связанных с типами посылок.
+Использует сервис ParcelTypeService для асинхронной выборки данных из базы данных.
 
 Маршруты:
 
-    /api/parcel-types (get_parcel_types):
-        Простая заглушка для получения всех типов посылок из базы данных.
-        Выполняет выборку всех записей из таблицы типов посылок и возвращает их названия.
-        Реализовано на скорую руку пока напрямую, сервис будет реализован позднее.
+      GET /api/parcels-types
+        Возвращает список всех типов посылок, содержащих их ID и названия.
+        Для обработки запросов используется сервис ParcelTypeService.
+        Обработаны исключения, связанные с ошибки валидации данных и ошибки базы данных, возвращая соответствующие коды HTTP.
 """
-
 import logging
-from uuid import UUID
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -33,6 +30,9 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 router = APIRouter()
 
+def get_parcel_type_service(db: AsyncSession = Depends(get_db)) -> ParcelTypeService:
+    return ParcelTypeService(db=db)
+
 @router.get("/",
             response_model=List[ParcelTypeResponseSchema],
             responses={
@@ -40,10 +40,11 @@ router = APIRouter()
             },
             summary="Получить все типы посылок",
             description="Возвращает список всех типов посылок и их ID из отдельной таблицы в базе данных.")
-async def get_parcel_types(db: AsyncSession = Depends(get_db)) -> List[ParcelTypeResponseSchema]:
+async def get_parcel_types(parcel_type_service: ParcelTypeService = Depends(get_parcel_type_service)
+                           ) -> List[ParcelTypeResponseSchema]:
 
     try:
-        result = await ParcelTypeService.get_parcel_types(db=db)
+        result = await parcel_type_service.get_parcel_types()
         return result
 
     except ParcelValidationError as e:  # ошибка внутри бизнес-логики, потому 500, а не 422

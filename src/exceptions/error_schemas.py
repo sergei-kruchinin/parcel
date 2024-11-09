@@ -15,6 +15,7 @@ class ErrorResponse(BaseModel):
     Базовая схема для сообщений об ошибке
 
     Attributes:
+
         detail (str): Описание ошибки.
         path (str): Путь, в котором произошла ошибка.
     """
@@ -27,6 +28,7 @@ class InternalServerErrorResponse(ErrorResponse):
     Сообщение об ошибке 500 Internal Server Error.
 
     Attributes:
+
         detail (str): Описание ошибки.
         path (str): Путь, на котором возникла ошибка.
     """
@@ -41,6 +43,7 @@ class BadRequestResponse(ErrorResponse):
     Сообщение об ошибке 400 Bad Request.
 
     Attributes:
+
         detail (str): Описание ошибки.
         path (str): Путь, в котором возникла ошибка.
     """
@@ -55,6 +58,7 @@ class NotFoundResponse(ErrorResponse):
     Сообщение об ошибке 404 Not Found.
 
     Attributes:
+
         detail (str): Описание ошибки.
         path (str): Путь, в котором возникла ошибка.
     """
@@ -69,6 +73,7 @@ class UnauthorizedResponse(ErrorResponse):
     Сообщение об ошибке 401 Unauthorized.
 
     Attributes:
+
         detail (str): Описание ошибки.
         path (str): Путь, в котором возникла ошибка.
     """

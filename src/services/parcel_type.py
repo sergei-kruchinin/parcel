@@ -19,15 +19,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ParcelTypeService:
-    """Сервис для получения информации о посылках из БД"""
+    """
+    Сервис для получения информации о типах посылок из БД
 
-    @staticmethod
-    async def get_parcel_types(db: AsyncSession) -> List[ParcelTypeResponseSchema]:
+    Attributes:
+         db (AsyncSession): Асинхронная сессия для взаимодействия с базой данных.
+    """
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+
+    async def get_parcel_types(self) -> List[ParcelTypeResponseSchema]:
         """
         Получает список типов посылок из базы данных.
-
-        Args:
-            db (AsyncSession): Асинхронная сессия базы данных.
 
         Returns:
             List[ParcelTypeResponseSchema]: Список типов посылок
@@ -38,7 +43,7 @@ class ParcelTypeService:
             Exception: Неизвестная ошибка при получении посылок для пользователя
             """
         try:
-            result = await db.execute(select(ParcelTypeModel).order_by(ParcelTypeModel.id))
+            result = await self.db.execute(select(ParcelTypeModel).order_by(ParcelTypeModel.id))
             parcel_types = result.scalars().all()
             response_list = [
                 ParcelTypeResponseSchema(

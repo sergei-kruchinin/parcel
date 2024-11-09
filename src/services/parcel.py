@@ -26,16 +26,23 @@ SHIPPING_COST_NOT_CALCULATED = "Не рассчитано"
 
 
 class ParcelService:
-    """Сервис для получения информации о посылках из БД"""
+    """
+    Сервис для получения информации о посылках из БД
 
-    @staticmethod
-    async def get_parcel_by_id(parcel_id: str, db: AsyncSession) -> ParcelResponseSchema:
+    Attributes:
+        db (AsyncSession): Асинхронная сессия для взаимодействия с базой данных.
+    """
+
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_parcel_by_id(self, parcel_id: str) -> ParcelResponseSchema:
         """
         Получает данные о посылке по её ID.
 
         Args:
             parcel_id (str): Уникальный ID посылки для получения (ulid).
-            db (AsyncSession): Асинхронная сессия базы данных.
 
         Returns:
             ParcelResponseSchema: Схема с детальной информацией о посылке.
@@ -49,7 +56,7 @@ class ParcelService:
         try:
             logger.info(f"Поиск информации о посылке {parcel_id}")
 
-            result = await db.execute(
+            result = await self.db.execute(
                 select(ParcelModel)
                 .options(selectinload(ParcelModel.parcel_type))
                 .where(ParcelModel.id == parcel_id)  # type: ignore
@@ -76,7 +83,7 @@ class ParcelService:
 
 
         except ParcelNotFoundError as e:
-            raise
+            raise e
 
         except ValidationError as e:
             logger.exception(f"Ошибка валидации данных для посылки с ID {parcel_id}: {str(e)}")
@@ -88,11 +95,11 @@ class ParcelService:
 
         except Exception as e:
             logger.exception(f"Неизвестная ошибка при получении посылки с ID {parcel_id}: {str(e)}")
-            raise
+            raise e
 
-    @staticmethod
+
     async def get_user_parcels(
-            db: AsyncSession,
+            self,
             user_session_id: UUID,
             offset: int = 0,
             limit: int = 30,
@@ -103,7 +110,6 @@ class ParcelService:
         Получает список посылок текущего пользователя с возможностью фильтрации.
 
         Args:
-            db (AsyncSession): Асинхронная сессия базы данных,
             user_session_id (UUID): Идентификатор пользовательской сессии для фильтрации посылок,
             offset (int): Смещение для пагинации, по умолчанию 0,
             limit (int): Максимальное количество посылок для получения, по умолчанию 30,
@@ -136,7 +142,7 @@ class ParcelService:
             # Так как используем ULID, добавляем сортировку по полю id
             query = query.order_by(ParcelModel.id)
 
-            result = await db.execute(query.offset(offset).limit(limit))
+            result = await self.db.execute(query.offset(offset).limit(limit))
             parcels = result.scalars().all()
             response_list = [
                 ParcelResponseSchema(

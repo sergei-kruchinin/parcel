@@ -7,7 +7,7 @@
 Содержит схемы:
     ParcelBaseSchema: Базовая схема для представления основной информации о посылке, включая название,
         вес, тип и стоимость.
-    ParcelCreateSchema: Схема для создания новой посылки, основанная на ParcelBaseSchema.
+    ParcelRegisterSchema: Схема для создания новой посылки, основанная на ParcelBaseSchema.
     ParcelReceivedSchema: Схема для представления данных принятой посылки с использованием ULID.
     ParcelSchema: Расширенная схема, включающая полную информацию о посылке, включая идентификаторы
         сессии пользователя и стоимость доставки.
@@ -26,6 +26,7 @@ class ParcelBaseSchema(BaseModel):
     Базовая схема для представления информации о посылке.
 
     Attributes:
+
         name (str): Название посылки, не менее 3 и более 255 символов,
         weight (Decimal): Вес посылки в килограммах (макс. 8 цифр, из них 3 после точки), должен быть положительным,
         parcel_type_id (int): Идентификатор типа посылки,
@@ -53,11 +54,12 @@ class ParcelBaseSchema(BaseModel):
         examples=[100.0])
 
 
-class ParcelCreateSchema(ParcelBaseSchema):
+class ParcelRegisterSchema(ParcelBaseSchema):
     """
-    Pydantic схема для создания посылки
+    Pydantic схема для регистрации посылки
 
     Attributes:
+
         name (str): Название посылки, не менее 3 и более 255 символов,
         weight (Decimal): Вес посылки в килограммах (макс. 8 цифр, из них 3 после точки), должен быть положительным,
         parcel_type_id (int): Идентификатор типа посылки,
@@ -72,9 +74,11 @@ class ParcelCreateSchema(ParcelBaseSchema):
 class ParcelReceivedSchema(ULIDSchema):
     """
     Pydantic схема для ответа о приеме посылки.
+
     Выдает только id посылки в формате ULID, больше ничего.
 
     Attributes:
+
             id (str): Уникальный идентификатор посылки в формате ULID, должен быть строкой длиной 26 символов.
     """
     pass
@@ -84,7 +88,9 @@ class ParcelSafeSchema(ParcelBaseSchema, ULIDSchema):
     """
     Схема для обработки полной информации о посылке. Без информации о пользовательской сессии
 
+
     Attributes:
+
         name (str): Название посылки, не менее 3 и более 255 символов,
         weight (Decimal): Вес посылки в килограммах (макс. 8 цифр, из них 3 после точки), должен быть положительным,
         parcel_type_id (int): Идентификатор типа посылки,
@@ -110,6 +116,7 @@ class ParcelSchema(ParcelSafeSchema):
     Схема для обработки полной информации о посылке.
 
     Attributes:
+
         name (str): Название посылки, не менее 3 и более 255 символов,
         weight (Decimal): Вес посылки в килограммах (макс. 8 цифр, из них 3 после точки), должен быть положительным,
         parcel_type_id (int): Идентификатор типа посылки,
@@ -129,9 +136,11 @@ class ParcelSchema(ParcelSafeSchema):
 class ParcelResponseSchema(ParcelSafeSchema):
     """
     Схема для представления полной информации о посылке.
+
     Основана на безопасной схеме, не предоставляет информацию о пользовательской сессии
 
     Attributes:
+
         name (str): Название посылки, не более 255 символов,
         weight (Decimal): Вес посылки в килограммах (макс. 8 цифр, из них 3 после точки), должен быть положительным,
         parcel_type_id (int): Идентификатор типа посылки,

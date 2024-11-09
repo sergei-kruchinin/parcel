@@ -16,40 +16,42 @@ from exceptions.exceptions import ParcelDatabaseError, ParcelValidationError
 logger = logging.getLogger(__name__)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-class ParcelCreateService:
+class ParcelRegisterService:
     """
     Сервис для записи посылки.
-    Запись непосредственно в БД
+    Запись непосредственно в БД.
+
+    Attributes:
+        db (AsyncSession): Асинхронная сессия для взаимодействия с базой данных.
     """
 
 
-    @staticmethod
-    async def create_parcel(
-        parcel_data: ParcelSchema,
-        db: AsyncSession
-    ) -> ParcelModel:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+
+    async def register_parcel(self,
+        parcel_data: ParcelSchema
+    ) -> None:
         """
         Сохраняет новую посылку в базе данных.
+        Важно: ORM-модель не возвращает, она нам не понадобится.
 
         Args:
             parcel_data (ParcelSchema): Схема посылки, содержащая данные для сохранения.
-            db (AsyncSession): Асинхронная сессия для взаимодействия с базой данных.
 
-        Returns:
-            ParcelModel: Сохраненная посылка из базы данных (ORM-модель)
 
         Raises:
             SQLAlchemyError: Если произошла ошибка при работе с базой данных.
         """
         try:
             new_parcel = ParcelModel(**parcel_data.model_dump())
-            db.add(new_parcel)
-            await db.commit()
-            await db.refresh(new_parcel)
-            return new_parcel
+            self.db.add(new_parcel)
+            await self.db.commit()
+            await self.db.refresh(new_parcel)
 
         except SQLAlchemyError as e:
-            await db.rollback()
+            await self.db.rollback()
             logger.exception(f"Ошибка базы данных при создании посылки: {str(e)}")
             raise ParcelDatabaseError(f"Ошибка базы данных при создании посылки: {str(e)}")
 

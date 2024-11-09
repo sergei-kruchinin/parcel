@@ -15,6 +15,7 @@
     `AsyncSessionLocal`: для создания асинхронных сессий работы с базой данных.
     `DATABASE_CREDS`: для получения DATABASE_URL в Alembic (для синхронной работы с БД).
 """
+
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base

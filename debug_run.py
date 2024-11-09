@@ -6,7 +6,7 @@
 Контейнер с mysql должен быть запущен.
 
 """
-import os
+
 from dotenv import load_dotenv
 import uvicorn
 
