@@ -30,7 +30,8 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 router = APIRouter()
 
-@router.get("/", response_model=List[ParcelTypeSchema], summary="Получить все типы посылок",
+@router.get("/", response_model=List[ParcelTypeSchema],
+            summary="Получить все типы посылок",
             description="Возвращает список всех типов посылок и их ID из отдельной таблицы в базе данных.")
 async def get_parcel_types(db: AsyncSession = Depends(get_db), user_session_id: UUID = Depends(get_user_session)):
 
