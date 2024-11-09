@@ -19,3 +19,9 @@ class ParcelTypeSchema(BaseModel):
     name: str = Field(..., min_length=3, max_length=50,
         description="Имя типа посылки, уникально и не более 50 символов.",
         examples=["Одежда"])
+
+
+class ParcelTypeResponseSchema(ParcelTypeSchema):
+    """Чтобы быть уверенными, что мы используем схему, предназначенную
+    точно для ответа, а не для внутреннего использования"""
+    pass

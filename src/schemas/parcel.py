@@ -101,7 +101,7 @@ class ParcelSafeSchema(ParcelBaseSchema, ULIDSchema):
         max_digits=9,
         decimal_places=2,
         gt=0,
-        description="Стоимость доставки посылки, если рассчитана, может быть None."
+        description="Стоимость доставки посылки, если рассчитана. Может быть None."
     )
 
 
@@ -138,8 +138,9 @@ class ParcelResponseSchema(ParcelSafeSchema):
         value (Decimal): Стоимость содержимого посылки в долларах (макс. 9 цифр, из них 2 после точки),
             должна быть положительной,
         id (str): Уникальный идентификатор посылки в формате ULID, должен быть строкой длиной 26 символов,
-        shipping_cost (Decimal|None): Стоимость доставки посылки, в рублях, если рассчитана. Может быть None,
-        parcel_type_name (str): Имя типа посылки, уникально, не менее 3х и не более 50 символов.
+        shipping_cost (Decimal|None|Str): Стоимость доставки посылки, в рублях, если рассчитана. Может быть None.
+            Также, если не рассчитано, может быть указано "Не рассчитано"
+        parcel_type_name (str): Имя типа посылки, уникально, не менее 3-х и не более 50 символов.
     """
 
     parcel_type_name: str = Field(
@@ -148,4 +149,9 @@ class ParcelResponseSchema(ParcelSafeSchema):
         max_length=50,
         description="Имя типа посылки, уникально и не более 50 символов.",
         examples=["Одежда"]
+    )
+
+    shipping_cost: Decimal | None | str = Field(
+        "Не рассчитано",
+        description="Стоимость доставки посылки, если рассчитана. Может быть \"не рассчитана\""
     )

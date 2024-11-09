@@ -10,10 +10,16 @@ from uuid import uuid4, UUID
 import logging
 from routes import parcels
 from routes import parcel_types
+from exceptions.error_handlers import register_http_error_handlers
+
+
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 app = FastAPI()
+
+register_http_error_handlers(app)
 
 
 @app.middleware("http")
@@ -24,15 +30,15 @@ async def add_user_session_id(request: Request, call_next):
     if request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
         return await call_next(request)
 
-    # Получаем куки из запроса
+    # Получаем ID сессии из cookies запроса
     user_session_id = request.cookies.get('user_session_id')
 
     if user_session_id:
-        # Если кука есть, просто продолжаем обработку
+        # Если user_session_id в cookies есть, просто продолжаем обработку
         return await call_next(request)
 
-    # Если кука user_session_id не установлена, сгенерируем UUID и установим в куки после получения
-    # ответа от FastAPI
+    # Если user_session_id в cookies не установлена, сгенерируем UUID и установим в cookies
+    # после получения ответа от FastAPI
     user_session_id = str(uuid4())
     response = await call_next(request)
     response.set_cookie(key="user_session_id", value=user_session_id, httponly=True)

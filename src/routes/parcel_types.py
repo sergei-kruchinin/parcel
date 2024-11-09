@@ -15,34 +15,45 @@
 
 import logging
 from uuid import UUID
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
-from schemas.parcel_type import ParcelTypeSchema
-from models.parcel_type import ParcelTypeModel
-from .dependencies import get_db, get_user_session
+
+from schemas.parcel_type import ParcelTypeResponseSchema
+from services.parcel_type import ParcelTypeService
+from exceptions.exceptions import ParcelDatabaseError, ParcelValidationError
+from exceptions.error_schemas import InternalServerErrorResponse
+from .dependencies import get_db
+
 
 logger = logging.getLogger(__name__)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 router = APIRouter()
 
-@router.get("/", response_model=List[ParcelTypeSchema],
+@router.get("/",
+            response_model=List[ParcelTypeResponseSchema],
+            responses={
+                status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": InternalServerErrorResponse},
+            },
             summary="Получить все типы посылок",
             description="Возвращает список всех типов посылок и их ID из отдельной таблицы в базе данных.")
-async def get_parcel_types(db: AsyncSession = Depends(get_db), user_session_id: UUID = Depends(get_user_session)):
+async def get_parcel_types(db: AsyncSession = Depends(get_db)) -> List[ParcelTypeResponseSchema]:
 
-    logger.info("Get parcel types CALLED")
-    logger.info(f"user_session_id: {user_session_id}")
-
-    # TODO: вынести логику работы с БД в сервис
     try:
-        result = await db.execute(select(ParcelTypeModel))
-        parcel_types = result.scalars().all()
+        result = await ParcelTypeService.get_parcel_types(db=db)
+        return result
 
-        return [parcel_type.name for parcel_type in parcel_types]
+    except ParcelValidationError as e:  # ошибка внутри бизнес-логики, потому 500, а не 422
+        logger.exception(f"Ошибка в данных типов посылки: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Внутренняя ошибка сервера")
+
+    except ParcelDatabaseError as e:
+        logger.exception(f"Ошибка базы данных при запросе типов посылок: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Внутренняя ошибка сервера")
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Неизвестная ошибка при запросе типов посылок для сессии: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Неизвестная ошибка")
