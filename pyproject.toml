@@ -15,7 +15,7 @@ uvicorn = "^0.32.0"
 gunicorn = "^23.0.0"
 aiomysql = "^0.2.0"
 cryptography = "^43.0.3"
-
+ulid-py = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 alembic = "^1.14.0"
