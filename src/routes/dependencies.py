@@ -34,8 +34,8 @@ def get_user_session(user_session_id: str = Cookie(
         UUID: Объект UUID, представляющий идентификатор сессии пользователя.
 
     Raises:
-        HTTPException: Ошибка 400, если cookie отсутствует
-                       Ошибка 422, если user_session_id имеет некорректный формат.
+        HTTPException: Ошибка 401, если cookie отсутствует
+                       Ошибка 400, если user_session_id имеет некорректный формат.
     """
 
     if not user_session_id:

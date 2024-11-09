@@ -75,7 +75,7 @@ class ParcelService:
                 parcel_type_id=parcel.parcel_type_id,
                 parcel_type_name=parcel.parcel_type.name,
                 value=parcel.value,
-                shipping_cost=parcel.shipping_cost if parcel.shipping_cost is not None else SHIPPING_COST_NOT_CALCULATED
+                shipping_cost=parcel.shipping_cost or SHIPPING_COST_NOT_CALCULATED
             )
 
             logger.info(f"Посылка с ID {parcel_id} успешно найдена.")
@@ -152,7 +152,7 @@ class ParcelService:
                     parcel_type_id=parcel.parcel_type_id,
                     parcel_type_name=parcel.parcel_type.name,
                     value=parcel.value,
-                    shipping_cost=parcel.shipping_cost if parcel.shipping_cost is not None else SHIPPING_COST_NOT_CALCULATED
+                    shipping_cost = parcel.shipping_cost or SHIPPING_COST_NOT_CALCULATED
                 )
                 for parcel in parcels
             ]

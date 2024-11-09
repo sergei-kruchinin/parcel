@@ -60,16 +60,16 @@ async def add_user_session_id(request: Request, call_next: Any) -> Response:
         Response: HTTP-ответ с установленным в cookies 'user_session_id', если он отсутствует.
     """
 
-    # Если нужно проверить как будет реагировать без установленной куки, если работаем через swagger
-    # раскомментировать:
-    if request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
-        return await call_next(request)
+    # Если нужно проверить как будет реагировать без установленной cookie, если работаем через swagger
+    # раскомментировать. Иначе после посещения /doc user_session_id уже будет установлена:
+    # if request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+    #     return await call_next(request)
 
-    # Получаем ID сессии из cookies запроса
+    # Получаем ID сессии из cookies
     user_session_id = request.cookies.get('user_session_id')
 
+    # Если user_session_id в cookies есть, просто продолжаем обработку
     if user_session_id:
-        # Если user_session_id в cookies есть, просто продолжаем обработку
         return await call_next(request)
 
     # Если user_session_id в cookies не установлена, сгенерируем UUID и установим в cookies
