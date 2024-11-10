@@ -27,3 +27,4 @@ build/
 
 # MacOS system files
 .DS_Store
+/installed.txt

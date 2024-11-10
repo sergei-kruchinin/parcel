@@ -9,9 +9,18 @@ from uuid import UUID
 
 from fastapi import HTTPException, Cookie, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.base import AsyncSessionLocal
+# from models.base import AsyncSessionLocal
+from models.base import DATABASE_URL
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
+
+engine = create_async_engine(DATABASE_URL, future=True, echo=False)
+
+AsyncSessionLocal = sessionmaker(
+    bind=engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def get_db() -> AsyncSession:

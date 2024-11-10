@@ -2,15 +2,10 @@
 
 from logging.config import fileConfig
 
+from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
-from alembic import context
-
-import os
-from dotenv import load_dotenv
-
-
 
 load_dotenv()
 # DATABASE_URL = os.getenv("DATABASE_URL")
@@ -31,13 +26,13 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.models.parcel_type import ParcelTypeModel  # type: ignore
-from src.models.parcel import ParcelModel  # type: ignore
-from src.models.base import Base, DATABASE_CREDS
+from webapp.src.models.parcel_type import ParcelTypeModel  # type: ignore
+from webapp.src.models.parcel import ParcelModel  # type: ignore
+from webapp.src.models.base import Base, DATABASE_CREDS
+
 
 target_metadata = Base.metadata
 DATABASE_URL = f"mysql+pymysql://{DATABASE_CREDS}"
-
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 

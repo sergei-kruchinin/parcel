@@ -14,6 +14,8 @@
         Принимает данные в формате JSON и валидирует их.
         Возвращает уникальный ULID для идентификации посылки в контексте пользовательской сессии.
         Для обработки запросов используется сервис ParcelRegisterService.
+        Проверки на дубли нет (должно быть отдельное бизнес-требование, может, продавец регистрирует
+        несколько экземпляров одного товара).
 
     GET /api/parcels/
         Получить список всех посылок, связанных с текущим пользователем.
@@ -83,7 +85,7 @@ def get_parcel_register_service(db: AsyncSession = Depends(get_db)) -> IParcelRe
              summary="Зарегистрировать новую посылку",
              description="Регистрация новой посылки. Данные принимаются в формате JSON и валидируются. "
                          "Успешно зарегистрированная посылка возвращает индивидуальный id в формате ULID "
-                         "в контексте сессии пользователя.")
+                         "в контексте сессии пользователя. На дубли не проверяется.")
 async def create_parcel(parcel: ParcelRegisterSchema,
                         parcel_register_service: IParcelRegisterService = Depends(get_parcel_register_service),
                         user_session_id: UUID = Depends(get_user_session)):
@@ -167,7 +169,7 @@ async def get_parcel(parcel_id: str = Path(
                         "Поддерживает пагинацию и фильтрацию по типу и факту наличия стоимости доставки.")
 async def get_user_parcels(
         offset: int = 0,
-        limit: int = 10,
+        limit: int = 30,
         parcel_type_id: int | None = Query(None),
         has_shipping_cost: bool | None = Query(None),
         parcel_service: ParcelService = Depends(get_parcel_service),
