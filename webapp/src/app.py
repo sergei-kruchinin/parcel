@@ -34,6 +34,7 @@ import logging
 from typing import Any
 from routes import parcels
 from routes import parcel_types
+from routes import healthy
 from exceptions.error_handlers import register_http_error_handlers
 
 
@@ -104,3 +105,4 @@ async def log_request_headers(request: Request, call_next: Any) -> Response:
 
 app.include_router(parcels.router, prefix="/api/parcels")
 app.include_router(parcel_types.router, prefix="/api/parcel-types")
+app.include_router(healthy.router, prefix="/api/healthy")

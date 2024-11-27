@@ -13,28 +13,21 @@
 
 import logging
 import os
-from decimal import Decimal, InvalidOperation
 
 import redis
 import requests
 from celery import Celery
-from sqlalchemy import create_engine
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.future import select
-from sqlalchemy.orm import sessionmaker
 
-from models.base import DATABASE_CREDS
-from models.parcel import ParcelModel
 
 # Константы
-USD_EXCHANGE_API_URL = os.getenv("USD_EXCHANGE_API_URL", "https://www.cbr-xml-daily.ru/daily_json.js")
-USD_EXCHANGE_CACHE_EXPIRE = int(os.getenv("USD_EXCHANGE_INTERVAL", 3600))  # Время жизни кэша курса в секундах (1 час)
-USD_EXCHANGE_INTERVAL = USD_EXCHANGE_CACHE_EXPIRE  # Время обновления кэша курса в секундах (1 час)
+
+USD_EXCHANGE_INTERVAL  = int(os.getenv("USD_EXCHANGE_INTERVAL", 3600))  # Время обновления кэша курса в секундах (1 час)
 SHIPPING_COST_UPDATE_INTERVAL = int(os.getenv("SHIPPING_COST_UPDATE_INTERVAL", 300))
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 CELERY_ENV = os.getenv("CELERY_ENV", "worker")
+INTERNAL_SERVICES_URL = os.getenv("INTERNAL_SERVICES_URL")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,11 +35,6 @@ logger = logging.getLogger(__name__)
 app = Celery('tasks', broker=CELERY_BROKER_URL)
 app.conf.broker_connection_retry_on_startup = True
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-
-# Создание синхронного движка и сессии
-DATABASE_URL_SYNC = f"mysql+pymysql://{DATABASE_CREDS}"
-sync_engine = create_engine(DATABASE_URL_SYNC, future=True, echo=False)
-SessionLocal = sessionmaker(bind=sync_engine, expire_on_commit=False)
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
@@ -58,21 +46,12 @@ def update_exchange_rate(self):
     Args:
         self: Ссылка на объект задачи, позволяющая выполнять повторные попытки.
     """
-    try:
-        response = requests.get(USD_EXCHANGE_API_URL, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        usd_rate = data['Valute']['USD']['Value']
-        redis_client.set('usd_to_rub', str(usd_rate), ex=USD_EXCHANGE_CACHE_EXPIRE)
-        logger.info("Курс валют обновлен и сохранен в Redis.")
-    except requests.RequestException as e:
-        logger.error(f"Ошибка при обращении к API для получения курса валют: {e}")
-        if self.request.retries < self.max_retries:
-            self.retry(exc=e)
-    except redis.RedisError as e:
-        logger.error(f"Ошибка при работе с Redis: {e}")
-        if self.request.retries < self.max_retries:
-            self.retry(exc=e)
+    logger.info("Обращаемся к служебному роуту для обновления валюты")
+    response = requests.post(f"{INTERNAL_SERVICES_URL}/api/update_usd_rate")
+    if response.status_code == 200:
+        logger.info("Успешно обновили курс доллара")
+    else:
+        logger.error(f"Не удалось обновить курс доллара {str(response.text)}")
 
 
 @app.task
@@ -81,39 +60,12 @@ def update_shipping_costs():
     Задача обновления стоимости доставки для всех посылок, у которых она еще не рассчитана.
     Использует курс USD к RUB, сохраненный в Redis, для выполнения вычислений.
     """
-    try:
-        usd_to_rub_bytes = redis_client.get('usd_to_rub')
-
-        if usd_to_rub_bytes is None:
-            logger.info("Курс валюты недоступен, пробуем вызвать обновление курса")
-            update_exchange_rate.apply_async()
-            raise ValueError("Курс валют отсутствует в Redis.")
-
-        usd_to_rub = Decimal(usd_to_rub_bytes.decode('utf-8'))
-
-        with SessionLocal() as session:
-            result = session.execute(select(ParcelModel).filter(ParcelModel.shipping_cost.is_(None)))
-            parcels = result.scalars().all()
-
-            for parcel in parcels:
-                weight = Decimal(parcel.weight)
-                value = Decimal(parcel.value)
-                new_shipping_cost = (weight * Decimal('0.5') + value * Decimal('0.01')) * usd_to_rub
-                parcel.shipping_cost = new_shipping_cost
-
-            session.commit()
-        logger.info("Стоимость доставки обновлена для всех посылок без расчетной стоимости.")
-    except (ValueError, InvalidOperation) as e:
-        logger.error(f"Ошибка при расчете стоимости доставки: {e}")
-
-    except SQLAlchemyError as e:
-        logger.error(f"Ошибка при работе с БД: {e}")
-
-    except redis.RedisError as e:
-        logger.error(f"Ошибка при работе с Redis: {e}")
-
-    except Exception as e:
-        logger.error(f"Общая ошибка при обновлении стоимости доставки: {e}")
+    logger.info("Обращаемся к служебному роуту для пересчета стоимостей доставки")
+    response = requests.post(f"{INTERNAL_SERVICES_URL}/api/update_shipping_costs")
+    if response.status_code == 200:
+        logger.info("Успешно обновили стоимости доставки")
+    else:
+        logger.error(f"Не удалось обновить стоимости доставки {str(response.text)}")
 
 
 if CELERY_ENV == "beat":

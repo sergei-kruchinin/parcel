@@ -1,13 +1,15 @@
-
+import sys
+import os
 
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-load_dotenv()
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app'))
+
 # DATABASE_URL = os.getenv("DATABASE_URL")
 
 # this is the Alembic Config object, which provides
@@ -26,9 +28,9 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from webapp.src.models.parcel_type import ParcelTypeModel  # type: ignore
-from webapp.src.models.parcel import ParcelModel  # type: ignore
-from webapp.src.models.base import Base, DATABASE_CREDS
+from models.parcel_type import ParcelTypeModel  # type: ignore
+from models.parcel import ParcelModel  # type: ignore
+from models.base import Base, DATABASE_CREDS # type: ignore
 
 
 target_metadata = Base.metadata

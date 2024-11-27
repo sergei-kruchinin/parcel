@@ -1,9 +1,11 @@
 """
-Сервис: services.parcel
+Модуль: services.parcel
 
-Служит для получения информации о посылках из БД
-
+Служит для получения информации о посылках из базы данных, используя SQLAlchemy.
+Предоставляет методы для получения данных о конкретной посылке и списка посылок для пользователя,
+с поддержкой фильтрации и пагинации.
 """
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -27,7 +29,10 @@ SHIPPING_COST_NOT_CALCULATED = "Не рассчитано"
 
 class ParcelService:
     """
-    Сервис для получения информации о посылках из БД
+    Сервис для получения информации о посылках из базы данных.
+
+    Использует SQLAlchemy для выполнения асинхронных запросов к базе данных. Предоставляет методы для
+    получения данных о конкретной посылке и списка посылок для конкретного пользователя.
 
     Attributes:
         db (AsyncSession): Асинхронная сессия для взаимодействия с базой данных.
@@ -118,6 +123,9 @@ class ParcelService:
                 по факту наличия рассчитанной стоимости доставки.
 
         Returns:
+            List[ParcelResponseSchema]: Список объектов ParcelResponseSchema с информацией о посылках.
+
+        Raises:
             ParcelValidationError: Ошибка валидации
             ParcelDatabaseError: Ошибка базы данных
             Exception: Неизвестная ошибка при получении посылок для пользователя

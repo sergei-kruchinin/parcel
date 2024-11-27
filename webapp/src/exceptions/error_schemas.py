@@ -20,7 +20,10 @@ class ErrorResponse(BaseModel):
         path (str): Путь, в котором произошла ошибка.
     """
     detail: str = Field(..., description="Краткое описание ошибки.")
-    path: str = Field("Путь, в котором произошла ошибка.", description="Путь, в котором произошла ошибка.")
+    path: str = Field(
+        "Путь, в котором произошла ошибка.",
+        description="Путь, в котором произошла ошибка."
+    )
 
 
 class InternalServerErrorResponse(ErrorResponse):

@@ -8,16 +8,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_HOST: db
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthy"]
       interval: 30s
       timeout: 10s
       retries: 5
+
+  migrate:
+    container_name: parcel_migrate
+    build:
+      context: webapp
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_HOST: db
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db/${MYSQL_DATABASE}"
 
   redis:
     image: redis:7.4.1
@@ -54,20 +71,17 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      internal_services_app:
         condition: service_healthy
     environment:
-      DATABASE_HOST: db
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       CELERY_BROKER_URL: redis://redis:6379/0
       REDIS_HOST: redis
       REDIS_PORT: 6379
       USD_EXCHANGE_API_URL: 'https://www.cbr-xml-daily.ru/daily_json.js'
-      USD_EXCHANGE_INTERVAL: 3600
-      SHIPPING_COST_UPDATE_INTERVAL: 300
+      USD_EXCHANGE_INTERVAL: ${USD_EXCHANGE_INTERVAL}
+      SHIPPING_COST_UPDATE_INTERVAL: ${SHIPPING_COST_UPDATE_INTERVAL}
       CELERY_ENV: worker
+      INTERNAL_SERVICES_URL: http://internal_services_app:8008
 
   celery-beat:
     container_name: parcel_celery_beat
@@ -77,6 +91,35 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      internal_services_app:
+        condition: service_healthy
     environment:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_ENV: beat
+
+  internal_services_app:
+    container_name: parcel_internal_services
+    build:
+      context: ./webapp  # Используем тот же контекст, что и для webapp
+    command: uvicorn internal_services_app:app --host 0.0.0.0 --port 8008 --reload
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    ports:
+      - "8008:8008"
+    environment:
+      DATABASE_HOST: db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      USD_EXCHANGE_API_URL: ${USD_EXCHANGE_API_URL}
+      USD_EXCHANGE_INTERVAL: ${USD_EXCHANGE_INTERVAL}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8008/api/healthy" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
